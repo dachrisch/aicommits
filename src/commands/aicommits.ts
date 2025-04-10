@@ -42,32 +42,35 @@ export default async (
 	detectingFiles.stop(`${getDetectedMessage(staged.files)}:\n${staged.files.map(file => `     ${file}`).join('\n')
 		}`);
 
-	const { env } = process;
-	const config = await getConfig({
-		OPENAI_KEY: env.OPENAI_KEY || env.OPENAI_API_KEY,
-		proxy: env.https_proxy || env.HTTPS_PROXY || env.http_proxy || env.HTTP_PROXY,
-		generate: generate?.toString(),
-		type: commitType?.toString(),
-	});
+		const { env } = process;
+		const config = await getConfig({
+			OPENAI_KEY: env.OPENAI_KEY || env.OPENAI_API_KEY,
+			OPENAI_BASE_URL: env.OPENAI_BASE_URL || env.OPENAI_BASEURL,
+			proxy: env.https_proxy || env.HTTPS_PROXY || env.http_proxy || env.HTTP_PROXY,
+			generate: generate?.toString(),
+			type: commitType?.toString(),
+		});
 
-	const s = spinner();
-	s.start('The AI is analyzing your changes');
-	let messages: string[];
-	try {
-		messages = await generateCommitMessage(
-			config.OPENAI_KEY,
-			config.model,
-			config.locale,
-			staged.diff,
-			config.generate,
-			config['max-length'],
-			config.type,
-			config.timeout,
-			config.proxy,
-		);
-	} finally {
-		s.stop('Changes analyzed');
-	}
+		const s = spinner();
+		s.start('The AI is analyzing your changes');
+		let messages: string[];
+		try {
+			messages = await generateCommitMessage(
+				config.OPENAI_KEY,
+				config.OPENAI_BASE_URL,
+				config.model,
+				config.locale,
+				staged.diff,
+				config.generate,
+				config['max-length'],
+				config['api-path-prefix'],
+				config.type,
+				config.timeout,
+				config.proxy
+			);
+		} finally {
+			s.stop('Changes analyzed');
+		}
 
 	if (messages.length === 0) {
 		throw new KnownError('No commit messages were generated. Try again.');

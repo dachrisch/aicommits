@@ -35,24 +35,26 @@ export default () => (async () => {
 		proxy: env.https_proxy || env.HTTPS_PROXY || env.http_proxy || env.HTTP_PROXY,
 	});
 
-	const s = spinner();
-	s.start('The AI is analyzing your changes');
-	let messages: string[];
-	try {
-		messages = await generateCommitMessage(
-			config.OPENAI_KEY,
-			config.model,
-			config.locale,
-			staged!.diff,
-			config.generate,
-			config['max-length'],
-			config.type,
-			config.timeout,
-			config.proxy,
-		);
-	} finally {
-		s.stop('Changes analyzed');
-	}
+		const s = spinner();
+		s.start('The AI is analyzing your changes');
+		let messages: string[];
+		try {
+			messages = await generateCommitMessage(
+				config.OPENAI_KEY,
+				config.OPENAI_BASE_URL,
+				config.model,
+				config.locale,
+				staged!.diff,
+				config.generate,
+				config['max-length'],
+				config['api-path-prefix'],
+				config.type,
+				config.timeout,
+				config.proxy
+			);
+		} finally {
+			s.stop('Changes analyzed');
+		}
 
 	/**
 	 * When `--no-edit` is passed in, the base commit message is empty,

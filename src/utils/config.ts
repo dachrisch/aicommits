@@ -5,6 +5,7 @@ import ini from 'ini';
 import type { TiktokenModel } from '@dqbd/tiktoken';
 import { fileExists } from './fs.js';
 import { KnownError } from './error.js';
+import { kMaxLength } from 'buffer';
 
 const commitTypes = ['', 'conventional'] as const;
 
@@ -28,10 +29,23 @@ const configParsers = {
 		if (!key) {
 			throw new KnownError('Please set your OpenAI API key via `aicommits config set OPENAI_KEY=<your token>`');
 		}
-		parseAssert('OPENAI_KEY', key.startsWith('sk-'), 'Must start with "sk-"');
+		//parseAssert('OPENAI_KEY', key.startsWith('sk-'), 'Must start with "sk-"');
 		// Key can range from 43~51 characters. There's no spec to assert this.
 
 		return key;
+	},
+	OPENAI_BASE_URL(url?: string) {
+		if (!url) {
+			return 'api.openai.com';
+		}
+
+		parseAssert(
+			'OPENAI_BASE_URL',
+			/^(?!:\/\/)([a-zA-Z0-9-_]+\.)+[a-zA-Z]{2,}$/.test(url),
+			'Must be a valid base domain (e.g., "api.openai.com", without http/https)'
+		);
+
+		return url;
 	},
 	locale(locale?: string) {
 		if (!locale) {
@@ -103,6 +117,30 @@ const configParsers = {
 		parseAssert('max-length', parsed >= 20, 'Must be greater than 20 characters');
 
 		return parsed;
+	},
+	'api-path-prefix'(apiPathPrefix?: string) {
+		if(!apiPathPrefix) {
+			return '/v1'
+		}
+		parseAssert(
+			'pathPrefix',
+			/^\//.test(apiPathPrefix),
+			'pathPrefix must start with /'
+		  );
+		  parseAssert(
+			'pathPrefix',
+			/[^\/]$/.test(apiPathPrefix),
+			'pathPrefix must not end with /'
+		  );
+
+		parseAssert(
+			'pathPrefix',
+			/^[a-zA-Z0-9/_-]*$/.test(apiPathPrefix),
+			'pathPrefix must contain only letters, numbers, slashes (/), dashes (-), or underscores (_)'
+		  );
+
+		return apiPathPrefix;
+
 	},
 } as const;
 
