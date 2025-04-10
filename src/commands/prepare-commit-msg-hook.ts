@@ -29,6 +29,26 @@ export default () =>
 
 		intro(bgCyan(black(' aicommits ')));
 
+		const s = spinner();
+		s.start('The AI is analyzing your changes');
+		let messages: string[];
+		try {
+			messages = await generateCommitMessage(
+				config.OPENAI_KEY,
+				config.OPENAI_BASE_URL,
+				config.model,
+				config.locale,
+				staged!.diff,
+				config.generate,
+				config['max-length'],
+				config['api-path-prefix'],
+				config.type,
+				config.timeout,
+				config.proxy
+			);
+		} finally {
+			s.stop('Changes analyzed');
+		}
 		const { env } = process;
 		const config = await getConfig({
 			proxy:
